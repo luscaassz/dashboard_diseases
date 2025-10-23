@@ -1,218 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dashboard de Taxas de Doenças</title>
+
+    <!-- Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #34495e;
-            --success-color: #2ecc71;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        
-        h1 {
-            margin: 0;
-            font-size: 2.2rem;
-        }
-        
-        .description {
-            font-style: italic;
-            margin-top: 10px;
-            opacity: 0.9;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 25px;
-        }
-        
-        .controls-panel {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .control-group {
-            margin-bottom: 25px;
-        }
-        
-        .control-group h3 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 8px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark-color);
-        }
-        
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            background-color: #f9f9f9;
-            transition: border-color 0.3s;
-        }
-        
-        select:focus, input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-        }
-        
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            transition: background-color 0.3s;
-        }
-        
-        button:hover {
-            background-color: #2980b9;
-        }
-        
-        .chart-container {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            height: 600px;
-        }
-        
-        .info-box {
-            background-color: #e8f4fc;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            flex-direction: column;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 20px;
-            border-left: 4px solid #c62828;
-        }
-        
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 20px;
-            border-left: 4px solid #2e7d32;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-        
-        @media (max-width: 900px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .data-info {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-        
-        .search-container {
-            position: relative;
-            margin-top: 10px;
-        }
-        
-        .search-container input {
-            padding-left: 35px;
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7f8c8d;
-        }
-    </style>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
     <div class="container">
@@ -220,12 +19,12 @@
             <h1>Dashboard de Taxas de Doenças por Município</h1>
             <p class="description">Visualize a evolução temporal das taxas de doenças nos municípios</p>
         </header>
-        
+
         <div class="dashboard">
+            <!-- coluna esquerda: controles -->
             <div class="controls-panel">
                 <div class="control-group">
                     <h3>Seleção de Dados</h3>
-                    
                     <label for="doenca">Doença:</label>
                     <select id="doenca">
                         <option value="tuberculose">Tuberculose</option>
@@ -235,438 +34,57 @@
                         <option value="sifilis">Sífilis</option>
                     </select>
                 </div>
-                
+
                 <div class="control-group">
                     <label for="dataInicio">Data Início:</label>
-                    <input type="month" id="dataInicio" min="2000-01" max="2023-12" value="2020-01">
-                    
+                    <input type="month" id="dataInicio" min="2000-01" max="2023-12" value="2020-01" />
                     <label for="dataFim">Data Fim:</label>
-                    <input type="month" id="dataFim" min="2000-01" max="2023-12" value="2023-12">
+                    <input type="month" id="dataFim" min="2000-01" max="2023-12" value="2023-12" />
                 </div>
-                
+
                 <div class="control-group">
                     <label for="municipioSearch">Buscar Município:</label>
                     <div class="search-container">
                         <span class="search-icon">🔍</span>
-                        <input type="text" id="municipioSearch" placeholder="Digite para buscar...">
+                        <input type="text" id="municipioSearch" placeholder="Digite para buscar..." />
                     </div>
-                    
+
                     <label for="municipio">Município:</label>
                     <select id="municipio" size="8">
                         <option value="">Selecione uma doença primeiro</option>
                     </select>
                 </div>
-                
+
                 <button id="gerarGrafico">Gerar Gráfico</button>
-                
+
                 <div class="info-box">
                     <p>Selecione uma doença, o período desejado e um município para visualizar a evolução das taxas ao longo do tempo.</p>
                 </div>
-                
+
                 <div id="mensagem" class="error" style="display: none;"></div>
             </div>
-            
-            <div class="chart-container">
-                <div id="loadingIndicator" class="loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Carregando dados...</p>
+
+            <!-- coluna direita: gráfico + estatísticas -->
+            <div class="right-panel">
+                <div class="chart-container">
+                    <div id="loadingIndicator" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Carregando dados...</p>
+                    </div>
+                    <canvas id="graficoDoenca"></canvas>
                 </div>
-                <canvas id="graficoDoenca"></canvas>
+
+                <!-- Painel de estatísticas dentro da coluna direita, logo abaixo do gráfico -->
+                <div id="statsPanel" class="stats-panel" style="display: none;" aria-live="polite"></div>
             </div>
         </div>
-        
+
         <footer>
             <p>Dashboard desenvolvido para visualização de taxas de doenças municipais | Dados de 2000 a 2023</p>
         </footer>
     </div>
 
-    <script>
-        // Variáveis globais
-        let dadosCarregados = {};
-        let municipios = [];
-        let chart = null;
-        let todosMunicipios = [];
-        
-        // Mapeamento de doenças para arquivos
-        const arquivosDoencas = {
-            tuberculose: 'data/TX_tuberculose_00_23.xlsx',
-            hepatite: 'data/TX_hepatite_00_23.xlsx',
-            hiv: 'data/TX_hiv_aids_00_23.xlsx',
-            hanseniase: 'data/TX_hanseniase_00_23.xlsx',
-            sifilis: 'data/TX_sifilis_00_23.xlsx'
-        };
-        
-        // Mapeamento de meses para números
-        const mesesMap = {
-            'Jan': '01', 'Fev': '02', 'Mar': '03', 'Abr': '04', 'Mai': '05', 'Jun': '06',
-            'Jul': '07', 'Ago': '08', 'Set': '09', 'Out': '10', 'Nov': '11', 'Dez': '12'
-        };
-        
-        // Função para mostrar mensagem
-        function mostrarMensagem(texto, tipo = 'error') {
-            const mensagem = document.getElementById('mensagem');
-            mensagem.textContent = texto;
-            mensagem.style.display = 'block';
-            mensagem.className = tipo;
-            
-            // Se for sucesso, esconder após 3 segundos
-            if (tipo === 'success') {
-                setTimeout(() => {
-                    mensagem.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        // Função para ocultar mensagem
-        function ocultarMensagem() {
-            document.getElementById('mensagem').style.display = 'none';
-        }
-        
-        // Função para mostrar loading
-        function mostrarLoading() {
-            document.getElementById('loadingIndicator').style.display = 'flex';
-        }
-        
-        // Função para ocultar loading
-        function ocultarLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
-        }
-        
-        // Função para converter formato "2000/Jan" para objeto Date
-        function parseDataColuna(dataStr) {
-            if (!dataStr || !dataStr.includes('/')) return null;
-            
-            const [ano, mesAbrev] = dataStr.split('/');
-            if (!mesesMap[mesAbrev]) return null;
-            
-            const mes = mesesMap[mesAbrev];
-            return new Date(parseInt(ano), parseInt(mes) - 1, 1);
-        }
-        
-        // Função para processar valor da célula
-        function processarValor(valor) {
-            if (valor === null || valor === undefined || valor === '') return null;
-            
-            if (typeof valor === 'number') {
-                return valor;
-            }
-            
-            if (typeof valor === 'string') {
-                // Substituir vírgula por ponto e converter para número
-                const num = parseFloat(valor.replace(',', '.'));
-                return isNaN(num) ? null : num;
-            }
-            
-            return null;
-        }
-        
-        // Função para carregar dados da doença selecionada
-        async function carregarDadosDoenca(doenca) {
-            mostrarLoading();
-            ocultarMensagem();
-            
-            try {
-                // Se já carregamos estes dados antes, usar da memória
-                if (dadosCarregados[doenca]) {
-                    processarDadosCarregados(dadosCarregados[doenca], doenca);
-                    ocultarLoading();
-                    return;
-                }
-                
-                // Buscar o arquivo
-                const resposta = await fetch(arquivosDoencas[doenca]);
-                if (!resposta.ok) {
-                    throw new Error(`Erro ao carregar arquivo: ${resposta.status}`);
-                }
-                
-                const arrayBuffer = await resposta.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                // Obter a primeira planilha
-                const primeiraPlanilha = workbook.Sheets[workbook.SheetNames[0]];
-                const dados = XLSX.utils.sheet_to_json(primeiraPlanilha, { header: 1 });
-                
-                // Processar cabeçalhos para identificar colunas de datas
-                const cabecalhos = dados[0];
-                const colunasDatas = cabecalhos.filter(h => 
-                    typeof h === 'string' && h.includes('/')
-                );
-                
-                // Extrair dados dos municípios
-                const dadosMunicipios = [];
-                
-                for (let i = 1; i < dados.length; i++) {
-                    const linha = dados[i];
-                    if (!linha || linha.length < 3) continue;
-                    
-                    const municipio = {
-                        codMun: linha[0] ? linha[0].toString() : '',
-                        codSus: linha[1] ? linha[1].toString() : '',
-                        nome: linha[2] ? linha[2].toString() : '',
-                        dados: {}
-                    };
-                    
-                    // Preencher dados temporais
-                    colunasDatas.forEach((data, idx) => {
-                        const colIndex = 3 + idx;
-                        if (colIndex < linha.length) {
-                            const valor = processarValor(linha[colIndex]);
-                            municipio.dados[data] = valor;
-                        } else {
-                            municipio.dados[data] = null;
-                        }
-                    });
-                    
-                    dadosMunicipios.push(municipio);
-                }
-                
-                // Armazenar dados em cache
-                dadosCarregados[doenca] = {
-                    colunasDatas,
-                    dadosMunicipios
-                };
-                
-                processarDadosCarregados(dadosCarregados[doenca], doenca);
-                ocultarLoading();
-                
-            } catch (erro) {
-                console.error('Erro ao carregar dados:', erro);
-                mostrarMensagem(`Erro ao carregar dados: ${erro.message}. Certifique-se de que os arquivos estão na pasta data/ e o servidor está configurado corretamente.`, 'error');
-                ocultarLoading();
-            }
-        }
-        
-        function processarDadosCarregados(dados, doenca) {
-            // Atualizar lista de municípios
-            municipios = dados.dadosMunicipios;
-            todosMunicipios = [...municipios];
-            
-            const selectMunicipio = document.getElementById('municipio');
-            selectMunicipio.innerHTML = '';
-            
-            // Ordenar municípios por nome
-            municipios.sort((a, b) => a.nome.localeCompare(b.nome));
-            
-            // Adicionar opção padrão
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'Selecione um município';
-            selectMunicipio.appendChild(defaultOption);
-            
-            // Adicionar municípios (apenas os primeiros 100 para performance)
-            const municipiosParaExibir = municipios.slice(0, 100);
-            
-            municipiosParaExibir.forEach(mun => {
-                const option = document.createElement('option');
-                option.value = mun.codMun;
-                option.textContent = `${mun.nome} (${mun.codMun})`;
-                option.setAttribute('data-nome', mun.nome);
-                selectMunicipio.appendChild(option);
-            });
-            
-            if (municipios.length > 100) {
-                const maisOption = document.createElement('option');
-                maisOption.textContent = `... e mais ${municipios.length - 100} municípios. Use a busca para encontrá-los.`;
-                maisOption.disabled = true;
-                selectMunicipio.appendChild(maisOption);
-            }
-            
-            mostrarMensagem(`Dados de ${doenca} carregados. ${municipios.length} municípios encontrados.`, 'success');
-        }
-        
-        // Função para filtrar municípios na busca
-        function filtrarMunicipios() {
-            const termo = document.getElementById('municipioSearch').value.toLowerCase();
-            const selectMunicipio = document.getElementById('municipio');
-            
-            selectMunicipio.innerHTML = '';
-            
-            if (termo === '') {
-                // Mostrar apenas os primeiro 100 municípios
-                const municipiosParaExibir = todosMunicipios.slice(0, 100);
-                
-                municipiosParaExibir.forEach(mun => {
-                    const option = document.createElement('option');
-                    option.value = mun.codMun;
-                    option.textContent = `${mun.nome} (${mun.codMun})`;
-                    option.setAttribute('data-nome', mun.nome);
-                    selectMunicipio.appendChild(option);
-                });
-                
-                if (todosMunicipios.length > 100) {
-                    const maisOption = document.createElement('option');
-                    maisOption.textContent = `... e mais ${todosMunicipios.length - 100} municípios. Digite na busca para encontrá-los.`;
-                    maisOption.disabled = true;
-                    selectMunicipio.appendChild(maisOption);
-                }
-            } else {
-                // Filtrar municípios pelo termo de busca
-                const municipiosFiltrados = todosMunicipios.filter(mun => 
-                    mun.nome.toLowerCase().includes(termo) || mun.codMun.includes(termo)
-                );
-                
-                if (municipiosFiltrados.length === 0) {
-                    const option = document.createElement('option');
-                    option.textContent = 'Nenhum município encontrado';
-                    option.disabled = true;
-                    selectMunicipio.appendChild(option);
-                } else {
-                    municipiosFiltrados.forEach(mun => {
-                        const option = document.createElement('option');
-                        option.value = mun.codMun;
-                        option.textContent = `${mun.nome} (${mun.codMun})`;
-                        option.setAttribute('data-nome', mun.nome);
-                        selectMunicipio.appendChild(option);
-                    });
-                }
-            }
-        }
-        
-        // Função para gerar o gráfico de pontos
-        function gerarGrafico() {
-            const doenca = document.getElementById('doenca').value;
-            const codMunicipio = document.getElementById('municipio').value;
-            const dataInicio = new Date(document.getElementById('dataInicio').value);
-            const dataFim = new Date(document.getElementById('dataFim').value);
-            
-            // Validar seleções
-            if (!dadosCarregados[doenca]) {
-                mostrarMensagem('Por favor, aguarde os dados serem carregados.');
-                return;
-            }
-            
-            if (!codMunicipio) {
-                mostrarMensagem('Por favor, selecione um município.');
-                return;
-            }
-            
-            if (dataInicio > dataFim) {
-                mostrarMensagem('A data de início deve ser anterior à data de fim.');
-                return;
-            }
-            
-            // Encontrar o município selecionado
-            const municipio = todosMunicipios.find(m => m.codMun === codMunicipio);
-            if (!municipio) {
-                mostrarMensagem('Município não encontrado.');
-                return;
-            }
-            
-            // Filtrar dados pelo período selecionado
-            const dadosFiltrados = [];
-            
-            Object.entries(municipio.dados).forEach(([dataStr, valor]) => {
-                const data = parseDataColuna(dataStr);
-                
-                if (data && data >= dataInicio && data <= dataFim && valor !== null) {
-                    dadosFiltrados.push({
-                        x: data,
-                        y: valor
-                    });
-                }
-            });
-            
-            // Ordenar por data
-            dadosFiltrados.sort((a, b) => a.x - b.x);
-            
-            if (dadosFiltrados.length === 0) {
-                mostrarMensagem('Não há dados disponíveis para o período selecionado.');
-                if (chart) {
-                    chart.destroy();
-                    chart = null;
-                }
-                return;
-            }
-            
-            ocultarMensagem();
-            
-            // Configurar o gráfico
-            const ctx = document.getElementById('graficoDoenca').getContext('2d');
-            
-            // Destruir gráfico anterior se existir
-            if (chart) {
-                chart.destroy();
-            }
-            
-            // Criar novo gráfico de pontos (scatter plot)
-            chart = new Chart(ctx, {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: `Taxa de ${doenca} em ${municipio.nome}`,
-                        data: dadosFiltrados,
-                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                        borderColor: 'rgb(75, 192, 192)',
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        pointBorderWidth: 2,
-                        pointBorderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'month',
-                                tooltipFormat: 'MMM/yyyy'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Data'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Taxa'
-                            },
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Taxa de ${doenca} em ${municipio.nome}`,
-                            font: {
-                                size: 18
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const data = context.raw;
-                                    const dataFormatada = new Date(data.x).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-                                    return `Data: ${dataFormatada}, Taxa: ${data.y !== null ? data.y.toFixed(4) : 'N/A'}`;
-                                }
-                            }
-                        },
-                        legend: {
-                            position: 'top',
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Event Listeners
-        document.getElementById('doenca').addEventListener('change', function() {
-            const doenca = this.value;
-            document.getElementById('municipio').innerHTML = '<option value="">Carregando...</option>';
-            carregarDadosDoenca(doenca);
-        });
-        
-        document.getElementById('municipioSearch').addEventListener('input', filtrarMunicipios);
-        
-        document.getElementById('gerarGrafico').addEventListener('click', gerarGrafico);
-        
-        // Inicializar - carregar dados da primeira doença
-        document.addEventListener('DOMContentLoaded', function() {
-            const doencaInicial = document.getElementById('doenca').value;
-            carregarDadosDoenca(doencaInicial);
-        });
-    </script>
+    <!-- JS -->
+    <script src="js/script.js"></script>
 </body>
 </html>

@@ -1,0 +1,209 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #34495e;
+    --success-color: #2ecc71;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #333;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 { margin: 0; font-size: 2.2rem; }
+.description { font-style: italic; margin-top: 10px; opacity: 0.9; }
+
+/* Grid com duas colunas: controles | right-panel (gráfico + stats) */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 25px;
+}
+
+/* controles (esquerda) */
+.controls-panel {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* painel direito que agrupa gráfico + stats */
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* chart container: altura fixa para evitar loop de resize */
+.chart-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    height: 520px; /* fixo para estabilidade */
+}
+
+/* força o canvas a preencher o container sem expandir layout */
+.chart-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100%;
+}
+
+/* Painel de estatísticas: força layout horizontal e campos centralizados */
+.stats-panel {
+    margin-top: 0;
+    padding: 14px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    background-color: #f6fbff;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-around; /* distribui horizontalmente */
+    flex-wrap: nowrap; /* sem quebra em telas largas */
+}
+
+/* cada item ocupa espaço igual e é centrado */
+.stat-item {
+    flex: 1 1 0;
+    min-width: 140px;
+    text-align: center;
+    font-size: 14px;
+}
+
+
+/* cada item estatístico */
+.stat-item { min-width: 160px; font-size: 14px; }
+.stat-item .label {
+    display: block;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin-bottom: 6px;
+}
+.stat-item .value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* restante do estilo (inputs, botões etc.) */
+.control-group { margin-bottom: 25px; }
+.control-group h3 {
+    margin-top: 0;
+    color: var(--secondary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+}
+
+label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark-color); }
+select, input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s;
+}
+select:focus, input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.12);
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+button:hover { background-color: #2980b9; }
+
+.info-box {
+    background-color: #e8f4fc;
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    flex-direction: column;
+}
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 20px;
+    border-left: 4px solid #c62828;
+}
+.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 20px;
+    border-left: 4px solid #2e7d32;
+}
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .chart-container { height: 420px; }
+}
