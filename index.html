@@ -17,15 +17,20 @@
     <div class="container">
         <header>
             <h1>Dashboard de Taxas de Doenças por Município</h1>
-            <p class="description">Visualize a evolução temporal das taxas de doenças nos municípios</p>
+            <p class="description">Visualize a evolução temporal das taxas de doenças nos municípios do estado de São Paulo</p>
         </header>
 
         <div class="dashboard">
             <!-- coluna esquerda: controles -->
             <div class="controls-panel">
                 <div class="control-group">
-                    <h3>Seleção de Dados</h3>
-                    <label for="doenca">Doença:</label>
+                    <label for="tipoVariavel">Tipo de Variável:</label>
+                    <select id="tipoVariavel">
+                        <option value="doencas" selected>Variáveis de Doenças</option>
+                        <option value="socioambientais">Variáveis Socioeconômicas e Ambientais</option>
+                    </select>
+
+                    <label for="doenca">Doença / Variável:</label>
                     <select id="doenca">
                         <option value="tuberculose">Tuberculose</option>
                         <option value="hepatite">Hepatite</option>
