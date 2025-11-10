@@ -1,48 +1,84 @@
+/* ============================
+   Variáveis CSS (Custom Properties)
+   ============================
+   Definem a paleta principal do tema e permitem alterar cores centralmente.
+   Notas:
+   - Usar var(--primary-color) em componentes facilita re-tematização.
+   - Evite valores sem contraste suficiente para textos sobre fundos claros/escuros.
+*/
 :root {
-    --primary-color: #3498db;
-    --secondary-color: #2c3e50;
-    --accent-color: #e74c3c;
-    --light-color: #ecf0f1;
-    --dark-color: #34495e;
-    --success-color: #2ecc71;
+    --primary-color: #3498db;      /* cor principal (azul claro) usada em highlights, bordas e foco */
+    --secondary-color: #2c3e50;    /* cor secundária mais escura, usada em headers/titulos */
+    --accent-color: #e74c3c;       /* cor de destaque/erro (vermelho) */
+    --light-color: #ecf0f1;        /* tom claro neutro (não aplicado diretamente em regras) */
+    --dark-color: #34495e;         /* tom escuro para textos secundários */
+    --success-color: #2ecc71;      /* cor usada para estados de sucesso (verde) */
 }
 
+/* ============================
+   Estilos base do documento
+   ============================
+   - Define fonte, reset leve de margin/padding, background gradiente e cor padrão de texto.
+   - min-height garante que o background cubra a viewport completa.
+*/
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* fonte legível em Windows e outros SO */
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    color: #333;
-    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* gradiente sutil de fundo */
+    color: #333;              /* cor padrão de texto (boa legibilidade sobre fundo claro) */
+    min-height: 100vh;        /* garante altura mínima da página para o background */
 }
 
+/* ============================
+   Container centralizado
+   ============================
+   - max-width controla legibilidade em telas grandes.
+   - padding interno para espaçamento confortável.
+*/
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
+/* ============================
+   Cabeçalho principal
+   ============================
+   - Fundo escuro com texto branco para contraste.
+   - borda arredondada, sombra suave e centralização do texto.
+*/
 header {
     background-color: var(--secondary-color);
     color: white;
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* sombra para destacar do fundo */
     text-align: center;
 }
 
-h1 { margin: 0; font-size: 2.2rem; }
-.description { font-style: italic; margin-top: 10px; opacity: 0.9; }
+h1 { margin: 0; font-size: 2.2rem; } /* título principal com tamanho maior */
+.description { font-style: italic; margin-top: 10px; opacity: 0.9; } /* subtítulo/descrição leve */
 
-/* Grid com duas colunas: controles | right-panel (gráfico + stats) */
+/* ============================
+   Layout principal (grid)
+   ============================
+   - Dois painéis: controles (esquerda) e painel direito (gráfico + estatísticas).
+   - gap controla espaçamento entre colunas.
+   - Em telas menores, media query abaixo muda para 1 coluna.
+*/
 .dashboard {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 2fr; /* coluna esquerda mais estreita, direita com 2x largura */
     gap: 25px;
 }
 
-/* controles (esquerda) */
+/* ============================
+   Painel de controles (esquerda)
+   ============================
+   - Caixa branca com padding e sombra — padrão de painel "card".
+*/
 .controls-panel {
     background-color: white;
     padding: 25px;
@@ -50,24 +86,32 @@ h1 { margin: 0; font-size: 2.2rem; }
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* painel direito que agrupa gráfico + stats */
+/* ============================
+   Painel direito (gráfico + stats)
+   ============================ */
 .right-panel {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
-/* chart container: altura fixa para evitar loop de resize */
+/* ============================
+   Container do gráfico
+   ============================
+   - Altura fixa para evitar loops de resize e para manter estabilidade do canvas.
+   - position: relative útil para overlays/controles absolutizados dentro do container.
+*/
 .chart-container {
     background-color: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: relative;
-    height: 520px; /* fixo para estabilidade */
+    height: 520px; /* fixo para estabilidade do layout do Chart.js */
 }
 
-/* força o canvas a preencher o container sem expandir layout */
+/* Força o canvas a preencher o container sem alterar o fluxo do layout.
+   !important é usado porque Chart.js às vezes aplica estilos inline. */
 .chart-container canvas {
     display: block;
     width: 100% !important;
@@ -75,7 +119,13 @@ h1 { margin: 0; font-size: 2.2rem; }
     max-height: 100%;
 }
 
-/* Painel de estatísticas: força layout horizontal e campos centralizados */
+/* ============================
+   Painel de estatísticas (barra)
+   ============================
+   - Layout horizontal com alinhamento central
+   - borda esquerda colorida para realce visual
+   - atenção: flex-wrap: nowrap evita quebra; em telas muito pequenas isso pode causar overflow
+*/
 .stats-panel {
     margin-top: 0;
     padding: 14px;
@@ -85,11 +135,12 @@ h1 { margin: 0; font-size: 2.2rem; }
     display: flex;
     gap: 12px;
     align-items: center;
-    justify-content: space-around; /* distribui horizontalmente */
-    flex-wrap: nowrap; /* sem quebra em telas largas */
+    justify-content: space-around; /* distribui igualmente horizontalmente */
+    flex-wrap: nowrap; /* sem quebra em telas largas (pode ajustar para wrap em mobile) */
 }
 
-/* cada item ocupa espaço igual e é centrado */
+/* Cada item estatístico ocupa espaço igual e é centralizado.
+   min-width protege contra colapso quando houver pouco conteúdo. */
 .stat-item {
     flex: 1 1 0;
     min-width: 140px;
@@ -97,9 +148,10 @@ h1 { margin: 0; font-size: 2.2rem; }
     font-size: 14px;
 }
 
-
-/* cada item estatístico */
+/* Redefinição leve (duplicada no original): garante largura mínima e tamanho de fonte */
 .stat-item { min-width: 160px; font-size: 14px; }
+
+/* Label e value dentro de cada stat-item */
 .stat-item .label {
     display: block;
     font-weight: 700;
@@ -112,12 +164,17 @@ h1 { margin: 0; font-size: 2.2rem; }
     color: var(--dark-color);
 }
 
-/* restante do estilo (inputs, botões etc.) */
+/* ============================
+   Estilos de formulários e controles
+   ============================
+   - Inputs e selects ocupam 100% da largura do container pai (boa usabilidade em mobile).
+   - Transição suave na borda ao focar para feedback visual.
+*/
 .control-group { margin-bottom: 25px; }
 .control-group h3 {
     margin-top: 0;
     color: var(--secondary-color);
-    border-bottom: 2px solid var(--primary-color);
+    border-bottom: 2px solid var(--primary-color); /* linha de separação sutil */
     padding-bottom: 8px;
 }
 
@@ -131,12 +188,19 @@ select, input {
     background-color: #f9f9f9;
     transition: border-color 0.3s;
 }
+/* Foco acessível: destaque com box-shadow suave e mudança de borda */
 select:focus, input:focus {
     border-color: var(--primary-color);
     outline: none;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.12);
 }
 
+/* ============================
+   Botões padrão
+   ============================
+   - Botão principal com cor primária, borda arredondada e hover.
+   - width:100% faz com que botões ocupem toda a coluna de controles (útil em mobile).
+*/
 button {
     background-color: var(--primary-color);
     color: white;
@@ -149,8 +213,9 @@ button {
     width: 100%;
     transition: background-color 0.3s;
 }
-button:hover { background-color: #2980b9; }
+button:hover { background-color: #2980b9; } /* hover mais escuro para feedback visual */
 
+/* Caixa informativa (ex: instruções) */
 .info-box {
     background-color: #e8f4fc;
     border-left: 4px solid var(--primary-color);
@@ -160,6 +225,12 @@ button:hover { background-color: #2980b9; }
     font-size: 14px;
 }
 
+/* ============================
+   Indicador de loading (centro do container)
+   ============================
+   - Spinner construído com bordas e animação keyframes.
+   - spinner tem border-left colorido para efeito de "progresso".
+*/
 .loading {
     display: flex;
     justify-content: center;
@@ -169,7 +240,7 @@ button:hover { background-color: #2980b9; }
 }
 .spinner {
     border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--primary-color);
+    border-left: 4px solid var(--primary-color); /* segmento colorido */
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -178,6 +249,11 @@ button:hover { background-color: #2980b9; }
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+/* ============================
+   Mensagens de status (erro / sucesso)
+   ============================
+   - Uso de cores fortes para comunicar estado; borda esquerda adiciona ênfase.
+*/
 .error {
     background-color: #ffebee;
     color: #c62828;
@@ -195,6 +271,9 @@ button:hover { background-color: #2980b9; }
     border-left: 4px solid #2e7d32;
 }
 
+/* ============================
+   Rodapé
+   ============================ */
 footer {
     text-align: center;
     margin-top: 40px;
@@ -203,13 +282,13 @@ footer {
     font-size: 14px;
 }
 
-/* Adicione estas regras ao seu CSS existente */
-
-/* Adicione estas regras ao seu CSS existente */
-
-/* Botão de previsão */
+/* ============================
+   Estilos específicos adicionados (botão de previsão e grupo de botões)
+   ============================
+   Estes foram adicionados ao CSS existente para controlar estados 'active' e 'loading'.
+*/
 #botaoPrevisao {
-    background-color: #6c757d;
+    background-color: #6c757d; /* cor neutra por padrão (cinza) */
     color: white;
     border: none;
     padding: 14px 25px;
@@ -221,32 +300,37 @@ footer {
     transition: background-color 0.3s;
     margin-top: 10px;
 }
-
 #botaoPrevisao:hover {
     background-color: #5a6268;
 }
-
+/* Estado ativo (quando previsão está aplicada) */
 #botaoPrevisao.active {
-    background-color: var(--success-color);
+    background-color: var(--success-color); /* verde para indicar ativo/sucesso */
 }
-
+/* Estado de carregamento: desativa cursor e pinta com cor de atenção */
 #botaoPrevisao.loading {
-    background-color: var(--accent-color);
+    background-color: var(--accent-color); /* vermelho/alarme enquanto carrega */
     cursor: not-allowed;
 }
 
-/* Container para os botões */
+/* Container para botões lado a lado (ex: gerar/limpar) */
 .button-group {
     display: flex;
     gap: 10px;
 }
 
+/* Cada botão dentro do grupo ocupa espaço igual */
 .button-group button {
     flex: 1;
     margin-top: 0;
 }
 
+/* ============================
+   Responsividade
+   ============================
+   - Em telas pequenas (<=900px) a grid passa a 1 coluna e o gráfico diminui um pouco.
+*/
 @media (max-width: 900px) {
-    .dashboard { grid-template-columns: 1fr; }
-    .chart-container { height: 420px; }
+    .dashboard { grid-template-columns: 1fr; } /* empilha painéis verticalmente */
+    .chart-container { height: 420px; }       /* reduz altura do gráfico para telas menores */
 }
