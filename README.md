@@ -163,7 +163,3 @@ O frontend carrega e plota automaticamente, gerando linhas para previsão, limit
 
 ---
 
-## Licença
-
-MIT License © [Seu Nome]
-
