@@ -203,6 +203,49 @@ footer {
     font-size: 14px;
 }
 
+/* Adicione estas regras ao seu CSS existente */
+
+/* Adicione estas regras ao seu CSS existente */
+
+/* Botão de previsão */
+#botaoPrevisao {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+}
+
+#botaoPrevisao:hover {
+    background-color: #5a6268;
+}
+
+#botaoPrevisao.active {
+    background-color: var(--success-color);
+}
+
+#botaoPrevisao.loading {
+    background-color: var(--accent-color);
+    cursor: not-allowed;
+}
+
+/* Container para os botões */
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button-group button {
+    flex: 1;
+    margin-top: 0;
+}
+
 @media (max-width: 900px) {
     .dashboard { grid-template-columns: 1fr; }
     .chart-container { height: 420px; }

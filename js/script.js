@@ -642,13 +642,24 @@ function gerarGrafico() {
 
     // Atualizar estatísticas: se múltiplas séries, usamos atualizarEstatisticasMultiplas
     if (datasetsToPlot.length === 1) {
-        // datasetToPlot[0].data está no formato [{x,y},...]
-        atualizarEstatisticas(datasetsToPlot[0].data, municipio.nome, datasetsToPlot[0].label);
+        atualizarEstatisticasComPrevisao(
+            datasetsToPlot[0].data, 
+            dadosPrevisao, 
+            municipio.nome, 
+            datasetsToPlot[0].label
+        );
+        
+        // MODIFICAÇÃO IMPORTANTE: Adicionar previsões APÓS criar o gráfico
+        // Aguardar um tick para garantir que o gráfico foi renderizado
+        setTimeout(() => {
+            if (previsaoAtiva && dadosPrevisao && tipo === 'doencas') {
+                adicionarPrevisoesAoGrafico(dadosPrevisao, chart);
+            }
+        }, 100);
+        
     } else {
-        // estatísticas separadas por série (cada dataset tem .label e .data)
-        // remover possíveis sufixos do label (ex: " — NomeDoMun") para mostrar só o nome da série
+        // estatísticas separadas por série (mantém o original)
         const seriesForStats = datasetsToPlot.map(ds => {
-            // manter label curta (usa texto antes de ' — ' se houver)
             const shortLabel = (ds.label && ds.label.includes('—')) ? ds.label.split('—')[0].trim() : ds.label;
             return { label: shortLabel, data: ds.data || [] };
         });
@@ -709,6 +720,309 @@ function popularSelectParaTipo(tipo) {
     }
 }
 
+// ==================== FUNÇÕES DE PREVISÃO ====================
+
+// Variáveis globais para controle de previsões
+let previsaoAtiva = false;
+let dadosPrevisao = null;
+
+// Mapeamento de doenças para nomes de arquivos de previsão
+const mapeamentoPrevisaoDoencas = {
+    'tuberculose': 'tuberculose',
+    'hepatite': 'hepatite',
+    'hiv': 'hiv_aids', 
+    'hanseniase': 'hanseniase',
+    'sifilis': 'sifilis'
+};
+
+// Função para carregar dados de previsão
+async function carregarDadosPrevisao(codMunicipio, doenca) {
+    const botaoPrevisao = document.getElementById('botaoPrevisao');
+    
+    try {
+        // Mostrar estado de carregamento
+        botaoPrevisao.classList.add('loading');
+        botaoPrevisao.textContent = 'Carregando...';
+        
+        const nomeDoencaArquivo = mapeamentoPrevisaoDoencas[doenca];
+        if (!nomeDoencaArquivo) {
+            throw new Error('Previsão não disponível para esta doença');
+        }
+        
+        const caminhoArquivo = `data/prophet/${nomeDoencaArquivo}/${codMunicipio}/forecast_${codMunicipio}_${nomeDoencaArquivo}.csv`;
+        
+        console.log(`Carregando previsão: ${caminhoArquivo}`);
+        
+        const resposta = await fetch(caminhoArquivo);
+        
+        if (!resposta.ok) {
+            throw new Error(`Arquivo de previsão não encontrado (${resposta.status})`);
+        }
+        
+        const csvText = await resposta.text();
+        const linhas = csvText.split('\n').filter(linha => linha.trim() !== '');
+        
+        if (linhas.length <= 1) {
+            throw new Error('Arquivo de previsão vazio');
+        }
+        
+        // Processar CSV
+        const cabecalhos = linhas[0].split(',');
+        const dadosProcessados = [];
+        
+        for (let i = 1; i < linhas.length; i++) {
+            const valores = linhas[i].split(',');
+            const registro = {};
+            
+            cabecalhos.forEach((cabecalho, index) => {
+                registro[cabecalho] = valores[index];
+            });
+            
+            dadosProcessados.push(registro);
+        }
+        
+        // Converter para formato interno
+        const previsaoFormatada = dadosProcessados.map(item => ({
+            data: new Date(item.ds),
+            previsao: parseFloat(item.yhat) || 0,
+            limiteInferior: parseFloat(item.yhat_lower) || 0,
+            limiteSuperior: parseFloat(item.yhat_upper) || 0,
+            valorReal: item.actual ? parseFloat(item.actual) : null
+        }));
+        
+        console.log(`Previsão carregada: ${previsaoFormatada.length} registros`);
+        
+        return previsaoFormatada;
+        
+    } catch (erro) {
+        console.error('Erro ao carregar previsão:', erro);
+        throw erro;
+    } finally {
+        // Restaurar botão
+        botaoPrevisao.classList.remove('loading');
+        botaoPrevisao.textContent = previsaoAtiva ? 'Remover Previsão' : 'Previsão';
+    }
+}
+
+// Função para adicionar previsões ao gráfico (VERSÃO CORRIGIDA)
+function adicionarPrevisoesAoGrafico(dadosPrevisao, chart) {
+    if (!chart || !dadosPrevisao) return;
+    
+    // Filtrar apenas dados futuros (onde valorReal é null)
+    const dadosFuturos = dadosPrevisao.filter(item => item.valorReal === null);
+    
+    if (dadosFuturos.length === 0) {
+        mostrarMensagem('Nenhum dado futuro encontrado na previsão', 'error');
+        return;
+    }
+    
+    console.log(`Adicionando ${dadosFuturos.length} pontos de previsão ao gráfico`);
+    
+    // Dataset do limite inferior (yhat_lower) - linha pontilhada fina
+    chart.data.datasets.push({
+        label: 'Limite Inferior',
+        data: dadosFuturos.map(item => ({
+            x: item.data,
+            y: item.limiteInferior
+        })),
+        borderColor: 'rgba(0, 55, 255, 0.6)', // Vermelho semi-transparente
+        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+        borderWidth: 4,
+        pointRadius: 0, // Sem pontos
+        pointHoverRadius: 0,
+        borderDash: [5, 5], // Linha pontilhada
+        fill: false,
+        tension: 0.3,
+        showLine: true // IMPORTANTE: Forçar mostrar linha
+    });
+    
+    // Dataset do limite superior (yhat_upper) - linha pontilhada fina
+    chart.data.datasets.push({
+        label: 'Limite Superior',
+        data: dadosFuturos.map(item => ({
+            x: item.data,
+            y: item.limiteSuperior
+        })),
+        borderColor: 'rgba(231, 76, 60, 0.6)', // Vermelho semi-transparente
+        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+        borderWidth: 4,
+        pointRadius: 0, // Sem pontos
+        pointHoverRadius: 0,
+        borderDash: [5, 5], // Linha pontilhada
+        fill: '+1', // Preencher área entre este e o dataset anterior
+        tension: 0.3,
+        showLine: true // IMPORTANTE: Forçar mostrar linha
+    });
+    
+    // Dataset da previsão principal (yhat) - linha contínua fina
+    chart.data.datasets.push({
+        label: 'Previsão',
+        data: dadosFuturos.map(item => ({
+            x: item.data,
+            y: item.previsao
+        })),
+        borderColor: '#00ff00ff', // Vermelho sólido do seu tema
+        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+        borderWidth: 4, // Linha mais fina
+        pointRadius: 2, // Pontos pequenos
+        pointHoverRadius: 4,
+        pointBackgroundColor: '#00ff33ff',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 1,
+        borderDash: [], // Linha sólida (sem pontilhado)
+        fill: false,
+        tension: 0.3,
+        showLine: true // IMPORTANTE: Forçar mostrar linha
+    });
+    
+    // Atualizar o gráfico
+    chart.update();
+    
+    console.log('Previsões adicionadas ao gráfico:', chart.data.datasets.length, 'datasets');
+}
+
+// Função para remover previsões do gráfico
+function removerPrevisoesDoGrafico(chart) {
+    if (!chart) return;
+    
+    // Contar quantos datasets de previsão existem (sempre 3: inferior, superior, previsão)
+    const totalDatasets = chart.data.datasets.length;
+    const datasetsOriginais = chart.data.datasets.slice(0, totalDatasets - 3);
+    chart.data.datasets = datasetsOriginais;
+    chart.update();
+    
+    console.log('Previsões removidas do gráfico');
+}
+
+// Função principal para controlar previsões
+async function togglePrevisao() {
+    const codMunicipio = document.getElementById('municipio').value;
+    const doenca = document.getElementById('doenca').value;
+    const botaoPrevisao = document.getElementById('botaoPrevisao');
+    
+    // Verificar se é uma variável de doença
+    const tipoVariavel = document.getElementById('tipoVariavel').value;
+    if (tipoVariavel !== 'doencas') {
+        mostrarMensagem('Previsões disponíveis apenas para variáveis de doenças', 'error');
+        return;
+    }
+    
+    if (!codMunicipio || !doenca) {
+        mostrarMensagem('Selecione um município e uma doença primeiro', 'error');
+        return;
+    }
+    
+    if (!previsaoAtiva) {
+        // Ativar previsão
+        try {
+            mostrarMensagem('Carregando previsão...', 'info');
+            
+            const previsaoCarregada = await carregarDadosPrevisao(codMunicipio, doenca);
+            
+            if (previsaoCarregada) {
+                dadosPrevisao = previsaoCarregada;
+                previsaoAtiva = true;
+                botaoPrevisao.classList.add('active');
+                botaoPrevisao.textContent = 'Remover Previsão';
+                
+                // Adicionar previsões ao gráfico atual
+                if (chart) {
+                    adicionarPrevisoesAoGrafico(dadosPrevisao, chart);
+                    mostrarMensagem('Previsão carregada com sucesso', 'success');
+                }
+            }
+        } catch (erro) {
+            mostrarMensagem(`Erro: ${erro.message}`, 'error');
+        }
+    } else {
+        // Desativar previsão
+        previsaoAtiva = false;
+        dadosPrevisao = null;
+        botaoPrevisao.classList.remove('active');
+        botaoPrevisao.textContent = 'Previsão';
+        
+        // Remover previsões do gráfico
+        if (chart) {
+            removerPrevisoesDoGrafico(chart);
+            mostrarMensagem('Previsão removida', 'success');
+        }
+    }
+}
+
+// Função para atualizar estatísticas com previsões
+function atualizarEstatisticasComPrevisao(dadosFiltrados, dadosPrevisao, nomeMunicipio, nomeDoenca) {
+    const statsPanel = document.getElementById('statsPanel');
+    
+    if (!dadosFiltrados || dadosFiltrados.length === 0) {
+        statsPanel.style.display = 'none';
+        statsPanel.innerHTML = '';
+        return;
+    }
+    
+    // Calcular estatísticas dos dados históricos
+    const valoresHistoricos = dadosFiltrados.map(d => d.y).filter(v => v !== null && !isNaN(v));
+    
+    if (valoresHistoricos.length === 0) {
+        statsPanel.style.display = 'none';
+        statsPanel.innerHTML = '';
+        return;
+    }
+    
+    const media = calcularMedia(valoresHistoricos);
+    const mediana = calcularMediana(valoresHistoricos);
+    const desvio = calcularDesvioPadrao(valoresHistoricos);
+    
+    const format = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    
+    let html = `
+        <div class="stat-item">
+            <span class="label">Série</span>
+            <span class="value">${nomeDoenca} — ${nomeMunicipio}</span>
+        </div>
+        <div class="stat-item">
+            <span class="label">Média (Histórico)</span>
+            <span class="value">${format(media)}</span>
+        </div>
+        <div class="stat-item">
+            <span class="label">Mediana (Histórico)</span>
+            <span class="value">${format(mediana)}</span>
+        </div>
+        <div class="stat-item">
+            <span class="label">Desvio Padrão (Histórico)</span>
+            <span class="value">${format(desvio)}</span>
+        </div>
+    `;
+    
+    // Adicionar estatísticas da previsão se disponível
+    if (previsaoAtiva && dadosPrevisao) {
+        const previsoesFuturas = dadosPrevisao.filter(item => item.valorReal === null);
+        const valoresPrevisao = previsoesFuturas.map(item => item.previsao);
+        
+        if (valoresPrevisao.length > 0) {
+            const mediaPrevisao = calcularMedia(valoresPrevisao);
+            const medianaPrevisao = calcularMediana(valoresPrevisao);
+            const desvioPrevisao = calcularDesvioPadrao(valoresPrevisao);
+            
+            html += `
+                <div class="stat-item" style="border-top: 2px solid #e74c3c; padding-top: 10px; margin-top: 10px;">
+                    <span class="label" style="color: #e74c3c; font-weight: 700;">Média (Previsão)</span>
+                    <span class="value" style="color: #e74c3c; font-weight: 700;">${format(mediaPrevisao)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label" style="color: #e74c3c; font-weight: 700;">Mediana (Previsão)</span>
+                    <span class="value" style="color: #e74c3c; font-weight: 700;">${format(medianaPrevisao)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label" style="color: #e74c3c; font-weight: 700;">Desvio Padrão (Previsão)</span>
+                    <span class="value" style="color: #e74c3c; font-weight: 700;">${format(desvioPrevisao)}</span>
+                </div>
+            `;
+        }
+    }
+
+    statsPanel.innerHTML = html;
+    statsPanel.style.display = 'flex';
+}
 
 /* ----------------------- Event listeners ----------------------- */
 document.getElementById('tipoVariavel').addEventListener('change', function(){
@@ -732,3 +1046,37 @@ document.addEventListener('DOMContentLoaded', function(){
     const doencaInicial = document.getElementById('doenca').value;
     carregarDadosDoenca(doencaInicial);
 });
+
+document.getElementById('botaoPrevisao').addEventListener('click', togglePrevisao);
+
+// Resetar previsões quando mudar município ou doença
+document.getElementById('municipio').addEventListener('change', function() {
+    if (previsaoAtiva) {
+        resetarPrevisao();
+    }
+});
+
+document.getElementById('doenca').addEventListener('change', function() {
+    if (previsaoAtiva) {
+        resetarPrevisao();
+    }
+});
+
+document.getElementById('tipoVariavel').addEventListener('change', function() {
+    if (previsaoAtiva) {
+        resetarPrevisao();
+    }
+});
+
+// Função para resetar previsão
+function resetarPrevisao() {
+    previsaoAtiva = false;
+    dadosPrevisao = null;
+    const botaoPrevisao = document.getElementById('botaoPrevisao');
+    botaoPrevisao.classList.remove('active');
+    botaoPrevisao.textContent = 'Previsão';
+    
+    if (chart) {
+        removerPrevisoesDoGrafico(chart);
+    }
+}
