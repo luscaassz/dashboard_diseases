@@ -325,6 +325,27 @@ footer {
     margin-top: 0;
 }
 
+#botaoDownloadPrevisao {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+#botaoDownloadPrevisao:hover {
+    background-color: #218838;
+}
+
+#botaoDownloadPrevisao:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
 /* ============================
    Responsividade
    ============================

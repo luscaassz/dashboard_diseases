@@ -22,7 +22,7 @@ RESULTS_XGB_DIR = "results/xgboost_all"
 RESULTS_PROPHET_DIR = "results/prophet"
 OUTPUT_DIR = "results_priorities"
 
-# NOMES EXATOS DAS COLUNAS (Conforme seu erro)
+# NOMES EXATOS DAS COLUNAS
 COL_CODIGO = 'CD_MUN'  # Coluna com o código IBGE
 COL_NOME = 'MUN'       # Coluna com o nome da cidade
 
@@ -75,7 +75,7 @@ def get_mapping_from_excel():
         except ValueError:
             continue 
 
-    # --- CRUZAMENTO COM A SUA LISTA ---
+    # --- CRUZAMENTO COM A LISTA ---
     final_mapping = {}
     print("\n--- Verificando Cidades Prioritárias ---")
     

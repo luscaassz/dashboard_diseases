@@ -37,7 +37,7 @@ const arquivosSocio = {
 
 // Rótulos amigáveis/legíveis para as variáveis socioambientais (usados na UI e legendas)
 const nomesSocio = {
-    indice_ppc: 'Índice do Poder da População (PPC)',
+    indice_ppc: 'Índice do Poder Financeiro',
     umidade: 'Umidade',
     urbanizacao: 'Urbanização',
     precipitacao: 'Precipitação',
@@ -47,6 +47,15 @@ const nomesSocio = {
     temp_max: 'Temperatura Máxima',
     temp_min: 'Temperatura Mínima'
 };
+
+const nomesDoencas = {
+    tuberculose: 'Tuberculose',
+    hepatite: 'Hepatite',
+    hiv: 'HIV/AIDS',
+    hanseniase: 'Hanseníase',
+    sifilis: 'Sífilis'
+};
+
 
 // Offset para interpretar colunas específicas de densidade que possuem sufixo numérico (por ex. DS_POP_00 -> ano 2000)
 const densidadeYearOffset = 2000;
@@ -535,6 +544,7 @@ function atualizarEstatisticasMultiplas(seriesArray, nomeMunicipio) {
    - Configura Chart.js: escala temporal no eixo X, tooltip customizado
    - Se apenas uma série: chama atualização de estatísticas e adiciona previsões (se ativas)
 */
+
 function gerarGrafico() {
     const tipo = document.getElementById('tipoVariavel').value;
     const variavelSelecionada = document.getElementById('doenca').value; // ex: 'tuberculose' ou 'temperaturas' ou 'temp_max'
@@ -543,6 +553,19 @@ function gerarGrafico() {
     const dataFimInput = document.getElementById('dataFim').value;
     const dataInicio = dataInicioInput ? new Date(dataInicioInput) : null;
     const dataFim = dataFimInput ? new Date(dataFimInput) : null;
+
+    const nomeDoencaParaTitulo = (function() {
+        if (variavelSelecionada === 'temperaturas') {
+            return 'Temperaturas (Máxima e Mínima)';
+        }
+        
+        const tipo = document.getElementById('tipoVariavel').value;
+        if (tipo === 'doencas') {
+            return nomesDoencas[variavelSelecionada] || variavelSelecionada.toUpperCase();
+        } else {
+            return nomesSocio[variavelSelecionada] || variavelSelecionada.toUpperCase();
+        }
+    })();
 
     // Para o combo de temperaturas, certifique-se que ambos datasets foram carregados
     if (variavelSelecionada === 'temperaturas') {
@@ -634,7 +657,7 @@ function gerarGrafico() {
         const serie = montarSerie(munObj, filtroDatas);
 
         datasetsToPlot.push({
-            label: `${variavelSelecionada} — ${munObj.nome || munObj.codMun}`,
+            label: `${nomeDoencaParaTitulo}`,
             data: serie,
             pointRadius: 6,
             pointHoverRadius: 8,
@@ -701,7 +724,7 @@ function gerarGrafico() {
             plugins: {
                 title: {
                     display: true,
-                    text: (variavelSelecionada === 'temperaturas') ? `Temperaturas — ${municipio.nome}` : `${variavelSelecionada} — ${municipio.nome}`,
+                    text: `${nomeDoencaParaTitulo} — ${municipio.nome}`,
                     font: { size: 18 }
                 },
                 tooltip: {
@@ -1008,8 +1031,9 @@ async function togglePrevisao() {
     const codMunicipio = document.getElementById('municipio').value;
     const doenca = document.getElementById('doenca').value;
     const botaoPrevisao = document.getElementById('botaoPrevisao');
+    const botaoDownload = document.getElementById('botaoDownloadPrevisao');
     
-    // Verificar se é uma variável de doença (previsões só para doenças)
+    // Verificar se é uma variável de doença
     const tipoVariavel = document.getElementById('tipoVariavel').value;
     if (tipoVariavel !== 'doencas') {
         mostrarMensagem('Previsões disponíveis apenas para variáveis de doenças', 'error');
@@ -1034,6 +1058,9 @@ async function togglePrevisao() {
                 botaoPrevisao.classList.add('active');
                 botaoPrevisao.textContent = 'Remover Previsão';
                 
+                // MOSTRAR botão de download
+                botaoDownload.style.display = 'inline-block';
+                
                 // Adicionar previsões ao gráfico atual
                 if (chart) {
                     adicionarPrevisoesAoGrafico(dadosPrevisao, chart);
@@ -1042,19 +1069,156 @@ async function togglePrevisao() {
             }
         } catch (erro) {
             mostrarMensagem(`Erro: ${erro.message}`, 'error');
+            botaoDownload.style.display = 'none';
         }
     } else {
-        // Desativar previsão: limpa estado e remove do gráfico
+        // Desativar previsão
         previsaoAtiva = false;
         dadosPrevisao = null;
         botaoPrevisao.classList.remove('active');
         botaoPrevisao.textContent = 'Previsão';
+        
+        // ESCONDER botão de download
+        botaoDownload.style.display = 'none';
         
         // Remover previsões do gráfico
         if (chart) {
             removerPrevisoesDoGrafico(chart);
             mostrarMensagem('Previsão removida', 'success');
         }
+    }
+}
+
+/* ----------------------- BAIXAR PLANILHA DE PREVISÕES -----------------------
+   - Converte os dados de previsão para formato Excel (XLSX)
+   - Cria um arquivo e inicia o download
+*/
+function baixarPlanilhaPrevisao() {
+    if (!dadosPrevisao || dadosPrevisao.length === 0) {
+        mostrarMensagem('Nenhuma previsão carregada para download', 'error');
+        return;
+    }
+    
+    try {
+        const municipioSelecionado = document.getElementById('municipio');
+        const municipioNome = municipioSelecionado.options[municipioSelecionado.selectedIndex].textContent;
+        const doencaSelecionada = document.getElementById('doenca').value;
+        const nomeDoenca = nomesDoencas[doencaSelecionada] || doencaSelecionada;
+        
+        // Preparar os dados para a planilha
+        const dadosFormatados = dadosPrevisao.map(item => ({
+            Data: item.data.toISOString().split('T')[0], // Formato YYYY-MM-DD
+            Previsão: item.previsao.toFixed(4),
+            'Limite Inferior': item.limiteInferior.toFixed(4),
+            'Limite Superior': item.limiteSuperior.toFixed(4),
+            'Valor Real': item.valorReal !== null ? item.valorReal.toFixed(4) : '',
+            Tipo: item.valorReal === null ? 'FUTURO' : 'HISTÓRICO'
+        }));
+        
+        // Criar worksheet
+        const worksheet = XLSX.utils.json_to_sheet(dadosFormatados);
+        
+        // Criar workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Previsões');
+        
+        // Adicionar informações adicionais como metadados
+        const infoSheetData = [
+            ['INFORMAÇÕES DA PREVISÃO'],
+            ['Município:', municipioNome],
+            ['Doença:', nomeDoenca],
+            ['Data de geração:', new Date().toLocaleString('pt-BR')],
+            ['Total de registros:', dadosPrevisao.length],
+            ['Registros futuros:', dadosPrevisao.filter(item => item.valorReal === null).length],
+            [''],
+            ['COLUNAS DA PLANILHA'],
+            ['Data: Data do registro (YYYY-MM-DD)'],
+            ['Previsão: Valor previsto (yhat)'],
+            ['Limite Inferior: Limite inferior da previsão (yhat_lower)'],
+            ['Limite Superior: Limite superior da previsão (yhat_upper)'],
+            ['Valor Real: Valor real observado (quando disponível)'],
+            ['Tipo: HISTÓRICO (dados reais) ou FUTURO (previsão)']
+        ];
+        
+        const infoWorksheet = XLSX.utils.aoa_to_sheet(infoSheetData);
+        XLSX.utils.book_append_sheet(workbook, infoWorksheet, 'Informações');
+        
+        // Gerar nome do arquivo
+        const nomeArquivo = `previsao_${nomeDoenca.replace(/\s+/g, '_')}_${municipioNome.split('(')[0].trim().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        // Gerar e baixar o arquivo
+        XLSX.writeFile(workbook, nomeArquivo);
+        
+        mostrarMensagem(`Planilha "${nomeArquivo}" baixada com sucesso!`, 'success');
+        
+    } catch (erro) {
+        console.error('Erro ao gerar planilha:', erro);
+        mostrarMensagem(`Erro ao gerar planilha: ${erro.message}`, 'error');
+    }
+}
+
+// Alternativa mais simples (CSV) se não quiser usar XLSX para exportar:
+function baixarCSVPrevisao() {
+    if (!dadosPrevisao || dadosPrevisao.length === 0) {
+        mostrarMensagem('Nenhuma previsão carregada para download', 'error');
+        return;
+    }
+    
+    try {
+        const municipioSelecionado = document.getElementById('municipio');
+        const municipioNome = municipioSelecionado.options[municipioSelecionado.selectedIndex].textContent;
+        const doencaSelecionada = document.getElementById('doenca').value;
+        const nomeDoenca = nomesDoencas[doencaSelecionada] || doencaSelecionada;
+        
+        // Cabeçalhos do CSV
+        const cabecalhos = ['Data', 'Previsão', 'Limite_Inferior', 'Limite_Superior', 'Valor_Real', 'Tipo'];
+        
+        // Converter dados para linhas CSV
+        const linhasCSV = dadosPrevisao.map(item => [
+            item.data.toISOString().split('T')[0],
+            item.previsao.toFixed(4),
+            item.limiteInferior.toFixed(4),
+            item.limiteSuperior.toFixed(4),
+            item.valorReal !== null ? item.valorReal.toFixed(4) : '',
+            item.valorReal === null ? 'FUTURO' : 'HISTÓRICO'
+        ]);
+        
+        // Adicionar cabeçalhos
+        const conteudoCSV = [
+            cabecalhos.join(','),
+            ...linhasCSV.map(linha => linha.join(','))
+        ].join('\n');
+        
+        // Adicionar informações no início do CSV
+        const info = [
+            `# PREVISÃO PARA: ${nomeDoenca}`,
+            `# MUNICÍPIO: ${municipioNome}`,
+            `# DATA GERAÇÃO: ${new Date().toLocaleString('pt-BR')}`,
+            `# TOTAL REGISTROS: ${dadosPrevisao.length}`,
+            `# REGISTROS FUTUROS: ${dadosPrevisao.filter(item => item.valorReal === null).length}`,
+            ''
+        ].join('\n');
+        
+        const conteudoCompleto = info + conteudoCSV;
+        
+        // Criar blob e link para download
+        const blob = new Blob([conteudoCompleto], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `previsao_${nomeDoenca.replace(/\s+/g, '_')}_${municipioNome.split('(')[0].trim().replace(/\s+/g, '_')}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        mostrarMensagem('Arquivo CSV baixado com sucesso!', 'success');
+        
+    } catch (erro) {
+        console.error('Erro ao gerar CSV:', erro);
+        mostrarMensagem(`Erro ao gerar arquivo: ${erro.message}`, 'error');
     }
 }
 
@@ -1191,6 +1355,13 @@ document.getElementById('tipoVariavel').addEventListener('change', function() {
     }
 });
 
+// Event listener para o botão de download de previsões
+document.getElementById('botaoDownloadPrevisao').addEventListener('click', function() {
+    // Escolha uma das funções (XLSX ou CSV):
+    baixarPlanilhaPrevisao(); // Para Excel
+    // ou: baixarCSVPrevisao(); // Para CSV
+});
+
 // Função para resetar previsão (limpa estado e remove do gráfico)
 function resetarPrevisao() {
     previsaoAtiva = false;
@@ -1198,6 +1369,10 @@ function resetarPrevisao() {
     const botaoPrevisao = document.getElementById('botaoPrevisao');
     botaoPrevisao.classList.remove('active');
     botaoPrevisao.textContent = 'Previsão';
+    
+    // ESCONDER botão de download
+    const botaoDownload = document.getElementById('botaoDownloadPrevisao');
+    botaoDownload.style.display = 'none';
     
     if (chart) {
         removerPrevisoesDoGrafico(chart);
