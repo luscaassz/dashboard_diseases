@@ -1,32 +1,37 @@
-# Dashboard Epidemiológico e Socioambiental
+# 📈 Dashboard de Previsão de Doenças Municipais
 
-Este repositório contém uma aplicação web interativa para visualização de séries temporais de doenças (Tuberculose, Hepatite, HIV/AIDS, Hanseníase e Sífilis) e variáveis socioambientais (como temperatura, umidade, urbanização, população, etc.) em municípios do estado de São Paulo. A aplicação também integra previsões de casos futuros utilizando **Prophet**.
+Sistema completo para **treinamento, avaliação e visualização** de modelos de previsão de séries temporais aplicados a taxas de doenças (tuberculose, hepatite, HIV/AIDS, hanseníase, sífilis) em municípios do estado de São Paulo. Inclui pipelines com XGBoost e Prophet, além de um dashboard web para exploração dos dados históricos e previsões futuras.
 
----
-
-## Índice
-
-- [Funcionalidades](#funcionalidades)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação e Execução](#instalação-e-execução)
-- [Uso](#uso)
-- [Descrição dos Scripts](#descrição-dos-scripts)
-- [Previsão com Prophet](#previsão-com-prophet)
-
----
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-2.0-green)
+![XGBoost](https://img.shields.io/badge/XGBoost-1.7-orange)
+![Prophet](https://img.shields.io/badge/Prophet-1.1-blueviolet)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ## Funcionalidades
 
-- Visualização de séries temporais de doenças e variáveis socioambientais.
-- Filtragem por município, intervalo de datas e tipo de variável.
-- Estatísticas automáticas: Média, Mediana e Desvio Padrão.
-- Gráficos interativos com **Chart.js**.
-- Suporte a previsões futuras de doenças via Prophet.
-- Carregamento dinâmico de datasets Excel e CSV.
-- Suporte a múltiplas séries, incluindo comparação de variáveis combinadas (ex.: temperaturas máxima e mínima).
+### Modelagem e Previsão
+- **XGBoost** – engenharia de features temporais (lags, médias móveis, diferenças, sazonalidade) e treinamento por município/doença.
+- **Prophet** – modelo com sazonalidade anual e regressores externos (densidade, precipitação, temperatura, etc.).
+- **Previsões até 2035** (Prophet) e até 2030 (XGBoost).
+- **Métricas de avaliação** – MAE, RMSE, R².
+- **7 gráficos de diagnóstico** por município: evolução real vs previsto, erros absolutos, distribuição de resíduos, dispersão, resíduos no tempo, média móvel e erro acumulado.
 
----
+### Dashboard Web
+- Seleção dinâmica entre **doenças** (tuberculose, hepatite, HIV/AIDS, hanseníase, sífilis) e **variáveis socioambientais** (índice PPC, umidade, urbanização, precipitação, população, evapotranspiração, densidade, temperaturas).
+- Filtro por município (busca com autocomplete) e período (2000‑2023).
+- Gráfico interativo (Chart.js) com suporte a **previsões futuras** (carregadas automaticamente dos CSVs gerados pelo Prophet).
+- Painel de estatísticas descritivas (média, mediana, desvio padrão) para dados históricos e previsões.
+- **Exportação** das previsões para Excel (XLSX) ou CSV.
+
+## 🧰 Tecnologias
+
+| Componente          | Ferramentas                                                                 |
+|---------------------|------------------------------------------------------------------------------|
+| **Backend**         | Python, Flask (para servir dados estáticos)                                 |
+| **Machine Learning**| XGBoost, Prophet, scikit-learn, pandas, numpy, scipy                        |
+| **Frontend**        | HTML5, CSS3, JavaScript (Chart.js, XLSX, fetch API)                         |
+| **Armazenamento**   | Arquivos Excel (`.xlsx`), CSV (previsões), pickle (cache)       
 
 ## Estrutura do Projeto
 
