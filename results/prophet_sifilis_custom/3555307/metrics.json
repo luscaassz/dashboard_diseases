@@ -1,0 +1,8 @@
+{
+    "disease": "sifilis",
+    "cod_mun": 3555307,
+    "mae": 0.0,
+    "rmse": 0.0,
+    "r2": 1.0,
+    "n_samples": 300
+}

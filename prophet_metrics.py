@@ -1,19 +1,4 @@
-#!/usr/bin/env python3
-"""
-calc_metrics_prophet.py
-
-Funcionalidade:
-1. Varre a pasta de resultados do Prophet (ex: results/prophet).
-2. Encontra todos os arquivos 'history.csv'.
-3. Calcula métricas (RMSE, MAE, R2) comparando 'y_true' vs 'y_pred'.
-4. Salva um arquivo 'metrics.json' na mesma pasta do município.
-5. Gera um CSV resumo de todas as doenças/municípios.
-
-Não requer re-treinamento do modelo.
-"""
-
 import os
-import glob
 import json
 import argparse
 import pandas as pd
@@ -33,30 +18,27 @@ def clean_metric(val):
 
 def calculate_and_save_metrics(file_path):
     try:
-        # Carregar apenas colunas necessárias
         df = pd.read_csv(file_path)
         
-        # Filtrar apenas linhas que tem valor Real (y_true) E Previsão (y_pred)
-        # O history.csv do seu script tem o futuro (onde y_true é vazio), precisamos ignorar isso
+        # Filtra apenas linhas com Real e Predito (ignora o futuro vazio)
         df_valid = df.dropna(subset=['y_true', 'y_pred']).copy()
         
         if len(df_valid) < 2:
-            return None # Dados insuficientes para métricas
+            return None 
 
         y_true = df_valid['y_true']
         y_pred = df_valid['y_pred']
 
-        # Cálculos
+        # Cálculos estatísticos
         mae = mean_absolute_error(y_true, y_pred)
         mse = mean_squared_error(y_true, y_pred)
         rmse = np.sqrt(mse)
         r2 = r2_score(y_true, y_pred)
 
-        # Extrair metadados (assume que as colunas existem no CSV conforme seu script anterior)
-        disease = str(df['disease'].iloc[0]) if 'disease' in df.columns else 'unknown'
-        cod_mun = int(df['cod_mun'].iloc[0]) if 'cod_mun' in df.columns else 0
+        # Tenta pegar metadados das colunas ou do nome da pasta
+        disease = str(df['disease'].iloc[0]) if 'disease' in df.columns else 'sifilis'
+        cod_mun = int(df['cod_mun'].iloc[0]) if 'cod_mun' in df.columns else Path(file_path).parent.name
 
-        # Montar Dicionário
         metrics = {
             'disease': disease,
             'cod_mun': cod_mun,
@@ -66,10 +48,8 @@ def calculate_and_save_metrics(file_path):
             'n_samples': int(len(df_valid))
         }
 
-        # Salvar JSON na mesma pasta do CSV
-        parent_dir = Path(file_path).parent
-        json_path = parent_dir / "metrics.json"
-        
+        # Salva o JSON na mesma pasta
+        json_path = Path(file_path).parent / "metrics.json"
         with open(json_path, 'w') as f:
             json.dump(metrics, f, indent=4)
             
@@ -80,39 +60,36 @@ def calculate_and_save_metrics(file_path):
         return None
 
 def main():
-    parser = argparse.ArgumentParser(description="Calcula métricas a partir de history.csv do Prophet")
-    parser.add_argument('--input_dir', default=DEFAULT_INPUT_DIR, help='Pasta raiz onde estão os resultados')
+    parser = argparse.ArgumentParser(description="Calcula métricas de forma recursiva")
+    parser.add_argument('--input_dir', default=DEFAULT_INPUT_DIR, help='Pasta raiz dos resultados')
     args = parser.parse_args()
 
-    # Encontrar todos os history.csv recursivamente
-    # Estrutura esperada: input_dir / disease / cod_mun / history.csv
-    search_path = os.path.join(args.input_dir, "*", "*", "history.csv")
-    files = glob.glob(search_path)
+    # MUDANÇA CHAVE: Busca recursiva (rglob) em vez de caminhos fixos
+    base_path = Path(args.input_dir)
+    print(f"Buscando arquivos em: {base_path.absolute()}")
+    
+    files = list(base_path.rglob("history.csv"))
     
     if not files:
-        print(f"Nenhum arquivo 'history.csv' encontrado em {search_path}")
+        print(f"❌ Nenhum arquivo 'history.csv' encontrado recursivamente em {args.input_dir}")
         return
 
-    print(f"Encontrados {len(files)} arquivos para processar.")
+    print(f"🔍 Encontrados {len(files)} arquivos para processar.")
     
     all_metrics = []
-    
-    # Barra de progresso
     for file_path in tqdm(files, desc="Calculando Métricas"):
         res = calculate_and_save_metrics(file_path)
         if res:
             all_metrics.append(res)
 
-    # Salvar Resumo Geral
     if all_metrics:
         df_summary = pd.DataFrame(all_metrics)
-        summary_path = os.path.join(args.input_dir, "summary_metrics_prophet.csv")
+        summary_path = base_path / "summary_metrics_prophet.csv"
         df_summary.to_csv(summary_path, index=False)
         
-        print("\nProcessamento Concluído!")
-        print(f"Resumo salvo em: {summary_path}")
-        print(f"Média R2 Global: {df_summary['r2'].mean():.4f}")
-        print(f"Total processado: {len(df_summary)}")
+        print(f"\n✅ Processamento Concluído!")
+        print(f"📊 Resumo salvo em: {summary_path}")
+        print(f"📈 Média R2 Global: {df_summary['r2'].mean():.4f}")
     else:
         print("Nenhuma métrica foi calculada.")
 
