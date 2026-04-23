@@ -1,9 +1,0 @@
-{
-    "disease": "TX_hanseniase_00_23",
-    "cod_mun": 3549607,
-    "mae": 0.0,
-    "rmse": 0.0,
-    "r2": 1.0,
-    "n_train": 251,
-    "n_test": 12
-}
